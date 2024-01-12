@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Response, Request
+from fastapi import FastAPI
 from mangum import Mangum
 import boto3
 import subprocess
@@ -38,12 +38,11 @@ def convert_wav():
     )
     stdout, stderr = process.communicate()
     bucket_name = 'sagemakerquestions'
-    object_key = '657ae0c1ec9a6e346d80318f.WAV'  # Replace with desired object key
+    object_key = '657ae0c1ec9a6e346d80318f.WAV'  # Replace with the desired object key
     save_to_s3(bucket_name, object_key, stdout)
 
 
 @app.get("/")
 def get_audio():
-
     convert_wav()
     return {"text": "text"}
