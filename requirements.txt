@@ -1,0 +1,8 @@
+language-tool-python
+librosa
+nltk
+fastapi
+uvicorn
+numpy
+mangum
+python-multipart
