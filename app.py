@@ -10,7 +10,7 @@ import language_tool_python
 from mangum import Mangum
 #
 import nltk
-nltk.data.path.append('/tmp')
+nltk.data.path.append('/nltk_docks')
 
 
 
