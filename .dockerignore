@@ -1,1 +1,9 @@
-venv
+etc
+include
+Lib
+Scripts
+share
+_pycache_
+output_audio.wav
+pyvenv.cfg
+main.py

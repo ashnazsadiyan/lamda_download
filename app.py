@@ -1,10 +1,19 @@
+from fastapi import FastAPI, File, UploadFile, Form, HTTPException
+from fastapi.responses import JSONResponse
+from typing import Optional
+import tempfile
+import os
 import librosa
 import numpy as np
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
 import language_tool_python
+from mangum import Mangum
+#
+import nltk
+nltk.data.path.append('/tmp')
 
-#import nltk
-#nltk.download('vader_lexicon')
+
+
 class AudioAnalysis:
     def __init__(self):
         self.speech_rate_threshold = 150  # Adjust as needed
@@ -54,24 +63,61 @@ class AudioAnalysis:
 
         return clarity, confidence, tone
 
+
+app = FastAPI()
+handler = Mangum(app)
+audio_analyzer = AudioAnalysis()
+
+
+@app.get("/testing")
+def testing():
+    return {"testing":1}
+
+
+@app.post("/process_data")
+async def process_data(
+    audio_file: UploadFile = File(...),
+    text_data: Optional[str] = Form(None)
+):
+    try:
+        # Save the uploaded audio file to a temporary location
+        with tempfile.NamedTemporaryFile(delete=False) as temp_audio:
+            temp_audio.write(audio_file.file.read())
+            temp_audio_path = temp_audio.name
+
+
+        # Perform audio analysis
+        speech_rate, mean_pitch, tone_score = audio_analyzer.analyze_audio(temp_audio_path)
+        
+        # Additional processing based on the provided text data (replace with your logic)
+        if text_data:
+            # Your text processing logic here
+            grammer_score = audio_analyzer.check_grammar(text_data)
+            grammer_score = round(grammer_score*100,2)
+        else:
+            processed_text = None
+
+        # Construct the response JSON
+        response_data = {
+            "speech_rate": float(speech_rate),
+            "mean_pitch": float(mean_pitch),
+            "tone_score": float(tone_score),
+            "grammer_score": float(grammer_score)
+        }
+        print(response_data)
+
+        return JSONResponse(content=response_data, status_code=200)
+
+    except Exception as e:
+        print(e)
+        # Handle exceptions and return an appropriate error response
+        return HTTPException(status_code=500, detail=f"Error processing data: {str(e)}")
+    finally:
+        # Delete the temporary audio file
+        os.remove(temp_audio_path)
+
+# To run the application:
+# uvicorn your_module_name:app --reload
 if __name__ == "__main__":
-    audio_analyzer = AudioAnalysis()
-
-    # Example audio file (replace with your actual audio file)
-    audio_file = "output_audio.wav"
-    text = "i'm winging its virgin tolentino you can call me john i'm twenty four years old i haven't the year work experience with the p. b. ewing the street doing inbound and outbound calling first i served as the technical consultant were in my multitasking skills has been definitely enhanced that eventually i switch to customer service were in how we're integrity lisa very big role definitely sales must always be on point ahead of the target and at the same time making sure that each and every customer will always be satisfied with my assistants and on top of all these skillfully also have the talent we're doing graphic design screening fly years business cards and social media advertisement which will really be helpful for clients marketing needs and i can assure you that i'm not just the libyan other number on your people but definitely a good addition to come and once again this is red john tolentino think you can get by"
-
-
-    # Analyze audio features
-    speech_rate, mean_pitch, tone_score = audio_analyzer.analyze_audio(audio_file)
-    grammar_score = audio_analyzer.check_grammar(text)
-    print(f"Speech Rate: {speech_rate} seconds")
-    print(f"Mean Pitch: {mean_pitch}")
-    print(f"Tone Score: {tone_score}")
-
-    # Assess audio quality
-    clarity, confidence, tone = audio_analyzer.assess_audio_quality(speech_rate, mean_pitch, tone_score)
-    print(f"Clarity: {clarity}")
-    print(f"Confidence: {confidence}")
-    print(f"Tone: {tone}")
-    print(round(grammar_score*100, 2))
+    import uvicorn
+    uvicorn.run(app, host="127.0.0.1", port=8000)
