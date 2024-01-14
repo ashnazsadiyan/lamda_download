@@ -10,8 +10,22 @@ import language_tool_python
 from mangum import Mangum
 #
 import nltk
-nltk.data.path.append('/nltk_docks')
 
+nltk.download('vader_lexicon', download_dir='nltk_docks')
+
+nltk.data.path.append('nltk_docks')
+
+os.environ["NLTK_DATA"] = 'nltk_docks'
+
+current_directory = os.getcwd()
+
+# List all files in the current directory
+files = os.listdir(current_directory)
+
+# Print the list of files
+print("Files in the current directory:")
+for file in files:
+    print(file)
 
 
 class AudioAnalysis:
