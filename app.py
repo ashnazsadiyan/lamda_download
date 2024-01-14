@@ -11,9 +11,9 @@ from mangum import Mangum
 #
 import nltk
 
-nltk.download('vader_lexicon', download_dir='nltk_docks')
+nltk.download('vader_lexicon', download_dir='nltk_docs')
 
-nltk.data.path.append('nltk_docks')
+nltk.data.path.append('nltk_docs')
 
 os.environ["NLTK_DATA"] = 'nltk_docks'
 
