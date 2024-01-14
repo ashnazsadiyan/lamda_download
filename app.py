@@ -11,11 +11,11 @@ from mangum import Mangum
 #
 import nltk
 
-nltk.download('vader_lexicon', download_dir='nltk_docs')
+nltk.download('vader_lexicon', download_dir='/tmp/nltk_docs')
 
-nltk.data.path.append('nltk_docs')
+nltk.data.path.append('/tmp/nltk_docs')
 
-os.environ["NLTK_DATA"] = 'nltk_docks'
+os.environ["NLTK_DATA"] = '/tmp/nltk_docs'
 
 current_directory = os.getcwd()
 
