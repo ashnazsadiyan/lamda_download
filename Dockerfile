@@ -15,7 +15,7 @@ ENV TRANSFORMERS_CACHE "/tmp/data"
 ENV LIBROSA_CACHE_DIR "/tmp"
 ENV NUMBA_CACHE_DIR "/tmp"
 
-COPY ffmpeg '/tmp/'
+COPY ffmpeg '/usr/share/'
 
 
 

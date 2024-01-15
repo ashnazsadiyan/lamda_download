@@ -11,6 +11,7 @@ from mangum import Mangum
 import boto3
 import nltk
 import subprocess
+from pydantic import BaseModel
 
 nltk.download('vader_lexicon', download_dir='/tmp/nltk_docs')
 
@@ -85,7 +86,7 @@ class AudioAnalysis:
 
 def save_to_s3(object_key, content):
     # AWS credentials setup (make sure you handle credentials securely)
-    aws_bucket_name ="reckognitionnew"
+    aws_bucket_name = "reckognitionnew"
     aws_access_key = 'AKIAZC3RQOWY2DXBO72Q'
     aws_secret_key = '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'
 
@@ -101,6 +102,10 @@ handler = Mangum(app)
 audio_analyzer = AudioAnalysis()
 
 
+class Questions(BaseModel):
+    text_data: str
+
+
 @app.get("/testing")
 def testing():
     return {"testing": 1}
@@ -108,22 +113,37 @@ def testing():
 
 @app.post("/process_data")
 async def process_data(
-        audio_file: UploadFile = File(...),
-        text_data: Optional[str] = Form(None)
+        questions: Questions
+        # audio_file: UploadFile = File(...),
+        # text_data: Optional[str] = Form(None)
 ):
     try:
         # Save the uploaded audio file to a temporary location
-        with tempfile.NamedTemporaryFile(delete=False) as temp_audio:
-            temp_audio.write(audio_file.file.read())
-            temp_audio_path = temp_audio.name
+        # with tempfile.NamedTemporaryFile(delete=False) as temp_audio:
+        #     temp_audio.write(audio_file.file.read())
+        #     temp_audio_path = temp_audio.name
 
         # Perform audio analysis
-        speech_rate, mean_pitch, tone_score = audio_analyzer.analyze_audio(temp_audio_path)
+        save_path= "/tmp/saved.WAV"
+        command = [
+            '/usr/share/ffmpeg',
+            '-i',
+            'https://d8cele0fjkppb.cloudfront.net/ivs/v1/624618927537/y16bDr6BzuhG/2023/12/6/10/49/4JCWi1cxMwWo/media/hls/master.m3u8',
+            '-b:a', '64k',
+            '-f', 'wav',  # Force output format to WAV
+            save_path
+              # Send output to stdout
+        ]
+
+        process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        stdout, stderr = process.communicate()
+
+        speech_rate, mean_pitch, tone_score = audio_analyzer.analyze_audio(save_path)
 
         # Additional processing based on the provided text data (replace with your logic)
-        if text_data:
+        if questions.text_data:
             # Your text processing logic here
-            grammer_score = audio_analyzer.check_grammar(text_data)
+            grammer_score = audio_analyzer.check_grammar(questions.text_data)
             grammer_score = round(grammer_score * 100, 2)
         else:
             processed_text = None
@@ -143,14 +163,13 @@ async def process_data(
         print(e)
         # Handle exceptions and return an appropriate error response
         return HTTPException(status_code=500, detail=f"Error processing data: {str(e)}")
-    finally:
+    # finally:
         # Delete the temporary audio file
-        os.remove(temp_audio_path)
+        # os.remove(temp_audio_path)
 
 
 @app.post('/download')
 def download_stream():
-
     try:
         local_file_path = '/tmp/stream.WAV'
         # ffmpeg_command = ['/tmp/ffmpeg', '-i', 'https://d8cele0fjkppb.cloudfront.net/ivs/v1/624618927537/y16bDr6BzuhG/2023/12/6/5/55/EWxpQleowffw/media/hls/master.m3u8', '-c', 'copy', '/tmp/stream.WAV']
@@ -158,7 +177,7 @@ def download_stream():
         # with open(local_file_path, 'rb') as local_file:
         #     save_to_s3("saved_audio.WAV", local_file)
         command = [
-            '/tmp/ffmpeg',
+            '/usr/share/ffmpeg',
             '-i',
             'https://d8cele0fjkppb.cloudfront.net/ivs/v1/624618927537/y16bDr6BzuhG/2023/12/6/10/49/4JCWi1cxMwWo/media/hls/master.m3u8',
             '-b:a', '64k',
@@ -169,12 +188,13 @@ def download_stream():
         process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         stdout, stderr = process.communicate()
         save_to_s3("save.WAV", stdout)
-        return {"file":'saved'}
+        return {"file": 'saved'}
 
     except Exception as e:
         print(e)
         # Handle exceptions and return an appropriate error response
         return HTTPException(status_code=500, detail=f"Error processing data: {str(e)}")
+
 
 # To run the application:
 # uvicorn your_module_name:app --reload
