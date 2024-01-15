@@ -168,24 +168,9 @@ def download_stream(questions: Questions):
         with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as temp_wav:
             temp_wav.write(stdout)
 
-        # waveform, sample_rate = librosa.load(temp_wav.name, sr=None)
+        waveform, sample_rate = librosa.load(temp_wav.name, sr=None)
 
-        speech_rate, mean_pitch, tone_score = audio_analyzer.analyze_audio(temp_wav.name)
-        grammer_score = 0.0001
-        if questions.text_data:
-            # Your text processing logic here
-            grammer_score = audio_analyzer.check_grammar(questions.text_data)
-            grammer_score = round(grammer_score * 100, 2)
-        else:
-            processed_text = None
-        response_data = {
-            "speech_rate": float(speech_rate),
-            "mean_pitch": float(mean_pitch),
-            "tone_score": float(tone_score),
-            "grammer_score": float(grammer_score)
-        }
-        print(response_data)
-        return JSONResponse(content=response_data, status_code=200)
+        return{"waveform":waveform,"sample_rate":sample_rate}
 
     except Exception as e:
         print(e)
