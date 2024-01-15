@@ -151,12 +151,11 @@ async def process_data(questions: Questions):
 
 
 @app.post('/download')
-def download_stream():
+def download_stream(questions: Questions):
     try:
-        local_file_path = '/tmp/stream.WAV'
         command = [
-            # '/usr/share/ffmpeg',
-            'ffmpeg',
+            '/usr/share/ffmpeg',
+            # 'ffmpeg',
             '-i',
             'https://d8cele0fjkppb.cloudfront.net/ivs/v1/624618927537/y16bDr6BzuhG/2023/12/6/10/49/4JCWi1cxMwWo/media/hls/master.m3u8',
             '-b:a', '64k',
@@ -169,9 +168,24 @@ def download_stream():
         with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as temp_wav:
             temp_wav.write(stdout)
 
-        waveform, sample_rate = librosa.load(temp_wav.name, sr=None)
-        save_to_s3("save.WAV", stdout)
-        return {"file": sample_rate}
+        # waveform, sample_rate = librosa.load(temp_wav.name, sr=None)
+
+        speech_rate, mean_pitch, tone_score = audio_analyzer.analyze_audio(temp_wav.name)
+        grammer_score = 0.0001
+        if questions.text_data:
+            # Your text processing logic here
+            grammer_score = audio_analyzer.check_grammar(questions.text_data)
+            grammer_score = round(grammer_score * 100, 2)
+        else:
+            processed_text = None
+        response_data = {
+            "speech_rate": float(speech_rate),
+            "mean_pitch": float(mean_pitch),
+            "tone_score": float(tone_score),
+            "grammer_score": float(grammer_score)
+        }
+        print(response_data)
+        return JSONResponse(content=response_data, status_code=200)
 
     except Exception as e:
         print(e)
