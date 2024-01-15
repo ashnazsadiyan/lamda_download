@@ -113,19 +113,10 @@ def testing():
 
 @app.post("/process_data")
 async def process_data(questions: Questions):
+    s3 = boto3.client('s3')
     try:
         # Perform audio analysis
-        command = [
-            '/usr/share/ffmpeg',
-            '-i',
-            'https://d8cele0fjkppb.cloudfront.net/ivs/v1/624618927537/y16bDr6BzuhG/2023/12/6/10/49/4JCWi1cxMwWo/media/hls/master.m3u8',
-            '-b:a', '64k',
-            '-f', 'wav',  # Force output format to WAV
-            '/tmp/output.wav'   # Send output to stdout
-        ]
-
-        subprocess.run(command, check=True)
-
+        s3.get_object(Bucket="reckognitionnew", Key="save.WAV")['Body']
         speech_rate, mean_pitch, tone_score = audio_analyzer.analyze_audio('/tmp/output.wav')
 
         # Additional processing based on the provided text data (replace with your logic)
