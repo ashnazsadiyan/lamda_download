@@ -155,7 +155,8 @@ def download_stream():
     try:
         local_file_path = '/tmp/stream.WAV'
         command = [
-            '/usr/share/ffmpeg',
+            # '/usr/share/ffmpeg',
+            'ffmpeg',
             '-i',
             'https://d8cele0fjkppb.cloudfront.net/ivs/v1/624618927537/y16bDr6BzuhG/2023/12/6/10/49/4JCWi1cxMwWo/media/hls/master.m3u8',
             '-b:a', '64k',
@@ -165,8 +166,12 @@ def download_stream():
 
         process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         stdout, stderr = process.communicate()
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as temp_wav:
+            temp_wav.write(stdout)
+
+        waveform, sample_rate = librosa.load(temp_wav.name, sr=None)
         save_to_s3("save.WAV", stdout)
-        return {"file": 'saved'}
+        return {"file": sample_rate}
 
     except Exception as e:
         print(e)
