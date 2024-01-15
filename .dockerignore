@@ -7,3 +7,4 @@ _pycache_
 output_audio.wav
 pyvenv.cfg
 main.py
+tmp

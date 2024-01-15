@@ -9,10 +9,14 @@ RUN mkdir /tmp/data
 
 
 
+
 # Set the TRANSFORMERS_CACHE environment variable
 ENV TRANSFORMERS_CACHE "/tmp/data"
 ENV LIBROSA_CACHE_DIR "/tmp"
 ENV NUMBA_CACHE_DIR "/tmp"
+
+COPY ffmpeg '/tmp/'
+
 
 
 # Copy requirements.txt and install the required packages
@@ -26,4 +30,3 @@ COPY app.py ${LAMBDA_TASK_ROOT}
 
 # Set the CMD for the Lambda function
 CMD [ "app.handler" ]
-

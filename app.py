@@ -152,14 +152,8 @@ async def process_data(
 def download_stream():
     try:
         local_file_path = '/tmp/stream.WAV'
-        ffmpeg_command = [
-            'ffmpeg',
-            '-i',
-            "https://d8cele0fjkppb.cloudfront.net/ivs/v1/624618927537/y16bDr6BzuhG/2023/12/6/5/55/EWxpQleowffw/media/hls/master.m3u8",
-            '-c', 'copy',
-            '-f', 'WAV',
-            local_file_path,
-        ]
+        ffmpeg_command = ['/tmp/ffmpeg', '-i', 'https://d8cele0fjkppb.cloudfront.net/ivs/v1/624618927537/y16bDr6BzuhG/2023/12/6/5/55/EWxpQleowffw/media/hls/master.m3u8', '-c', 'copy', '/tmp/stream.WAV']
+
         subprocess.run(ffmpeg_command, check=True)
         with open(local_file_path, 'rb') as local_file:
             save_to_s3("saved_audio.WAV", local_file)
