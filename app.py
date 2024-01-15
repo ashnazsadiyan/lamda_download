@@ -150,13 +150,26 @@ async def process_data(
 
 @app.post('/download')
 def download_stream():
+
     try:
         local_file_path = '/tmp/stream.WAV'
-        ffmpeg_command = ['/tmp/ffmpeg', '-i', 'https://d8cele0fjkppb.cloudfront.net/ivs/v1/624618927537/y16bDr6BzuhG/2023/12/6/5/55/EWxpQleowffw/media/hls/master.m3u8', '-c', 'copy', '/tmp/stream.WAV']
+        # ffmpeg_command = ['/tmp/ffmpeg', '-i', 'https://d8cele0fjkppb.cloudfront.net/ivs/v1/624618927537/y16bDr6BzuhG/2023/12/6/5/55/EWxpQleowffw/media/hls/master.m3u8', '-c', 'copy', '/tmp/stream.WAV']
+        # subprocess.run(ffmpeg_command, check=True)
+        # with open(local_file_path, 'rb') as local_file:
+        #     save_to_s3("saved_audio.WAV", local_file)
+        command = [
+            '/tmp/ffmpeg',
+            '-i',
+            'https://d8cele0fjkppb.cloudfront.net/ivs/v1/624618927537/y16bDr6BzuhG/2023/12/6/10/49/4JCWi1cxMwWo/media/hls/master.m3u8',
+            '-b:a', '64k',
+            '-f', 'wav',  # Force output format to WAV
+            'pipe:1'  # Send output to stdout
+        ]
 
-        subprocess.run(ffmpeg_command, check=True)
-        with open(local_file_path, 'rb') as local_file:
-            save_to_s3("saved_audio.WAV", local_file)
+        process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        stdout, stderr = process.communicate()
+        save_to_s3("save.WAV", stdout)
+        return {"file":'saved'}
 
     except Exception as e:
         print(e)
