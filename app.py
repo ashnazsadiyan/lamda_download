@@ -116,22 +116,21 @@ async def process_data(questions: Questions):
     s3 = boto3.client('s3')
     try:
         # Perform audio analysis
-        # s3.get_object(Bucket="reckognitionnew", Key="save.WAV")['Body']
         s3_bucket = "reckognitionnew"
         s3_key = "save.WAV"
-        s3.download_file(s3_bucket, s3_key, '/usr/share/output.WAV')
+        local_file_path = '/tmp/output.WAV'
+        # s3.download_file(s3_bucket, s3_key, '/tmp/output.WAV')
 
-        speech_rate, mean_pitch, tone_score = audio_analyzer.analyze_audio('/usr/share/output.WAV')
+        with open(local_file_path, 'wb') as local_file:
+            s3.download_fileobj(s3_bucket, s3_key, local_file)
 
-        # Additional processing based on the provided text data (replace with your logic)
+        speech_rate, mean_pitch, tone_score = audio_analyzer.analyze_audio(local_file)
         if questions.text_data:
             # Your text processing logic here
             grammer_score = audio_analyzer.check_grammar(questions.text_data)
             grammer_score = round(grammer_score * 100, 2)
         else:
             processed_text = None
-
-        # Construct the response JSON
         response_data = {
             "speech_rate": float(speech_rate),
             "mean_pitch": float(mean_pitch),
@@ -147,8 +146,8 @@ async def process_data(questions: Questions):
         # Handle exceptions and return an appropriate error response
         return HTTPException(status_code=500, detail=f"Error processing data: {str(e)}")
     # finally:
-        # Delete the temporary audio file
-        # os.remove(temp_audio_path)
+    # Delete the temporary audio file
+    # os.remove(temp_audio_path)
 
 
 @app.post('/download')
