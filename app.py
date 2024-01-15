@@ -112,17 +112,8 @@ def testing():
 
 
 @app.post("/process_data")
-async def process_data(
-        questions: Questions
-        # audio_file: UploadFile = File(...),
-        # text_data: Optional[str] = Form(None)
-):
+async def process_data(questions: Questions):
     try:
-        # Save the uploaded audio file to a temporary location
-        # with tempfile.NamedTemporaryFile(delete=False) as temp_audio:
-        #     temp_audio.write(audio_file.file.read())
-        #     temp_audio_path = temp_audio.name
-
         # Perform audio analysis
         command = [
             '/usr/share/ffmpeg',
@@ -130,13 +121,12 @@ async def process_data(
             'https://d8cele0fjkppb.cloudfront.net/ivs/v1/624618927537/y16bDr6BzuhG/2023/12/6/10/49/4JCWi1cxMwWo/media/hls/master.m3u8',
             '-b:a', '64k',
             '-f', 'wav',  # Force output format to WAV
-            'pipe:1'  # Send output to stdout
+            '/tmp/output.wav'   # Send output to stdout
         ]
 
-        process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        stdout, stderr = process.communicate()
+        subprocess.run(command, check=True)
 
-        speech_rate, mean_pitch, tone_score = audio_analyzer.analyze_audio(stdout)
+        speech_rate, mean_pitch, tone_score = audio_analyzer.analyze_audio('/tmp/output.wav')
 
         # Additional processing based on the provided text data (replace with your logic)
         if questions.text_data:
