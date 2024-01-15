@@ -6,3 +6,4 @@ uvicorn
 numpy
 mangum
 python-multipart
+boto3

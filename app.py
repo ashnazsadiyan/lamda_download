@@ -8,7 +8,7 @@ import numpy as np
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
 import language_tool_python
 from mangum import Mangum
-#
+import boto3
 import nltk
 
 nltk.download('vader_lexicon', download_dir='/tmp/nltk_docs')
@@ -16,6 +16,9 @@ nltk.download('vader_lexicon', download_dir='/tmp/nltk_docs')
 nltk.data.path.append('/tmp/nltk_docs')
 
 os.environ["NLTK_DATA"] = '/tmp/nltk_docs'
+# librosa.cache.clear()
+os.environ["LIBROSA_CACHE_DIR"] = "/tmp"
+librosa.cache.path = '/tmp'
 
 current_directory = os.getcwd()
 
@@ -42,7 +45,6 @@ class AudioAnalysis:
         grammar_score = 1 - len(matches) / len(text.split())
 
         return grammar_score
-
 
     def analyze_audio(self, audio_file):
         # Load audio file using librosa
@@ -77,6 +79,18 @@ class AudioAnalysis:
 
         return clarity, confidence, tone
 
+    # save to s3
+    def save_to_s3(bucket_name, object_key, content):
+        # AWS credentials setup (make sure you handle credentials securely)
+        aws_access_key = 'AKIAZC3RQOWY2DXBO72Q'
+        aws_secret_key = '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'
+
+        # Initialize S3 client
+        s3 = boto3.client('s3', aws_access_key_id=aws_access_key, aws_secret_access_key=aws_secret_key)
+
+        # Upload content to S3
+        s3.put_object(Bucket=bucket_name, Key=object_key, Body=content)
+
 
 app = FastAPI()
 handler = Mangum(app)
@@ -85,13 +99,13 @@ audio_analyzer = AudioAnalysis()
 
 @app.get("/testing")
 def testing():
-    return {"testing":1}
+    return {"testing": 1}
 
 
 @app.post("/process_data")
 async def process_data(
-    audio_file: UploadFile = File(...),
-    text_data: Optional[str] = Form(None)
+        audio_file: UploadFile = File(...),
+        text_data: Optional[str] = Form(None)
 ):
     try:
         # Save the uploaded audio file to a temporary location
@@ -99,15 +113,14 @@ async def process_data(
             temp_audio.write(audio_file.file.read())
             temp_audio_path = temp_audio.name
 
-
         # Perform audio analysis
         speech_rate, mean_pitch, tone_score = audio_analyzer.analyze_audio(temp_audio_path)
-        
+
         # Additional processing based on the provided text data (replace with your logic)
         if text_data:
             # Your text processing logic here
             grammer_score = audio_analyzer.check_grammar(text_data)
-            grammer_score = round(grammer_score*100,2)
+            grammer_score = round(grammer_score * 100, 2)
         else:
             processed_text = None
 
@@ -130,8 +143,10 @@ async def process_data(
         # Delete the temporary audio file
         os.remove(temp_audio_path)
 
+
 # To run the application:
 # uvicorn your_module_name:app --reload
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(app, host="127.0.0.1", port=8000)
