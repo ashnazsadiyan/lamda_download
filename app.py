@@ -170,7 +170,7 @@ def download_stream(questions: Questions):
 
         waveform, sample_rate = librosa.load(temp_wav.name, sr=None)
 
-        return{"waveform":waveform,"sample_rate":sample_rate}
+        return {"file": sample_rate}
 
     except Exception as e:
         print(e)
