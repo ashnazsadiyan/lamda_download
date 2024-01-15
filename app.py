@@ -10,6 +10,7 @@ import language_tool_python
 from mangum import Mangum
 import boto3
 import nltk
+import subprocess
 
 nltk.download('vader_lexicon', download_dir='/tmp/nltk_docs')
 
@@ -80,16 +81,19 @@ class AudioAnalysis:
         return clarity, confidence, tone
 
     # save to s3
-    def save_to_s3(bucket_name, object_key, content):
-        # AWS credentials setup (make sure you handle credentials securely)
-        aws_access_key = 'AKIAZC3RQOWY2DXBO72Q'
-        aws_secret_key = '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'
 
-        # Initialize S3 client
-        s3 = boto3.client('s3', aws_access_key_id=aws_access_key, aws_secret_access_key=aws_secret_key)
 
-        # Upload content to S3
-        s3.put_object(Bucket=bucket_name, Key=object_key, Body=content)
+def save_to_s3(object_key, content):
+    # AWS credentials setup (make sure you handle credentials securely)
+    aws_bucket_name ="reckognitionnew"
+    aws_access_key = 'AKIAZC3RQOWY2DXBO72Q'
+    aws_secret_key = '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'
+
+    # Initialize S3 client
+    s3 = boto3.client('s3', aws_access_key_id=aws_access_key, aws_secret_access_key=aws_secret_key)
+
+    # Upload content to S3
+    s3.put_object(Bucket=aws_bucket_name, Key=object_key, Body=content)
 
 
 app = FastAPI()
@@ -143,6 +147,27 @@ async def process_data(
         # Delete the temporary audio file
         os.remove(temp_audio_path)
 
+
+@app.post('/download')
+def download_stream():
+    try:
+        local_file_path = '/tmp/stream.WAV'
+        ffmpeg_command = [
+            'ffmpeg',
+            '-i',
+            "https://d8cele0fjkppb.cloudfront.net/ivs/v1/624618927537/y16bDr6BzuhG/2023/12/6/5/55/EWxpQleowffw/media/hls/master.m3u8",
+            '-c', 'copy',
+            '-f', 'WAV',
+            local_file_path,
+        ]
+        subprocess.run(ffmpeg_command, check=True)
+        with open(local_file_path, 'rb') as local_file:
+            save_to_s3("saved_audio.WAV", local_file)
+
+    except Exception as e:
+        print(e)
+        # Handle exceptions and return an appropriate error response
+        return HTTPException(status_code=500, detail=f"Error processing data: {str(e)}")
 
 # To run the application:
 # uvicorn your_module_name:app --reload
