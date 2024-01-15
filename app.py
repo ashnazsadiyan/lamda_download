@@ -116,8 +116,13 @@ async def process_data(questions: Questions):
     s3 = boto3.client('s3')
     try:
         # Perform audio analysis
-        s3.get_object(Bucket="reckognitionnew", Key="save.WAV")['Body']
-        speech_rate, mean_pitch, tone_score = audio_analyzer.analyze_audio('/tmp/output.wav')
+        # s3.get_object(Bucket="reckognitionnew", Key="save.WAV")['Body']
+        s3_bucket = "reckognitionnew"
+        s3_key = "save.WAV"
+        with open('/tmp/output.WAV', 'wb') as f:
+            s3.download_fileobj(s3_bucket, s3_key, f)
+
+        speech_rate, mean_pitch, tone_score = audio_analyzer.analyze_audio('/tmp/output.WAV')
 
         # Additional processing based on the provided text data (replace with your logic)
         if questions.text_data:
