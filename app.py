@@ -124,21 +124,19 @@ async def process_data(
         #     temp_audio_path = temp_audio.name
 
         # Perform audio analysis
-        save_path= "/tmp/saved.WAV"
         command = [
             '/usr/share/ffmpeg',
             '-i',
             'https://d8cele0fjkppb.cloudfront.net/ivs/v1/624618927537/y16bDr6BzuhG/2023/12/6/10/49/4JCWi1cxMwWo/media/hls/master.m3u8',
             '-b:a', '64k',
             '-f', 'wav',  # Force output format to WAV
-            save_path
-              # Send output to stdout
+            'pipe:1'  # Send output to stdout
         ]
 
         process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         stdout, stderr = process.communicate()
 
-        speech_rate, mean_pitch, tone_score = audio_analyzer.analyze_audio(save_path)
+        speech_rate, mean_pitch, tone_score = audio_analyzer.analyze_audio(stdout)
 
         # Additional processing based on the provided text data (replace with your logic)
         if questions.text_data:
@@ -172,10 +170,6 @@ async def process_data(
 def download_stream():
     try:
         local_file_path = '/tmp/stream.WAV'
-        # ffmpeg_command = ['/tmp/ffmpeg', '-i', 'https://d8cele0fjkppb.cloudfront.net/ivs/v1/624618927537/y16bDr6BzuhG/2023/12/6/5/55/EWxpQleowffw/media/hls/master.m3u8', '-c', 'copy', '/tmp/stream.WAV']
-        # subprocess.run(ffmpeg_command, check=True)
-        # with open(local_file_path, 'rb') as local_file:
-        #     save_to_s3("saved_audio.WAV", local_file)
         command = [
             '/usr/share/ffmpeg',
             '-i',
