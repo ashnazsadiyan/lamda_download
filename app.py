@@ -22,6 +22,8 @@ os.environ["NLTK_DATA"] = '/tmp/nltk_docs'
 os.environ["LIBROSA_CACHE_DIR"] = "/tmp"
 librosa.cache.path = '/tmp'
 
+os.environ['TMPDIR'] = "/tmp"
+
 current_directory = os.getcwd()
 
 # List all files in the current directory
@@ -154,8 +156,8 @@ async def process_data(questions: Questions):
 def download_stream(questions: Questions):
     try:
         command = [
-            '/usr/share/ffmpeg',
-            # 'ffmpeg',
+            # '/usr/share/ffmpeg',
+            'ffmpeg',
             '-i',
             'https://d8cele0fjkppb.cloudfront.net/ivs/v1/624618927537/y16bDr6BzuhG/2023/12/6/10/49/4JCWi1cxMwWo/media/hls/master.m3u8',
             '-b:a', '64k',
@@ -169,8 +171,28 @@ def download_stream(questions: Questions):
             temp_wav.write(stdout)
 
         waveform, sample_rate = librosa.load(temp_wav.name, sr=None)
+        # Analyze speech rate
+        speech_rate = len(waveform) / sample_rate  # Speech rate in seconds
 
-        return {"file": sample_rate}
+        # Analyze pitch variation
+        pitches, magnitudes = librosa.core.piptrack(y=waveform, sr=sample_rate)
+        mean_pitch = np.mean(pitches[pitches > 0])
+
+        # tool = language_tool_python.LanguageTool('en-US')
+        # matches = tool.check(questions.text_data)
+        # grammar_score = 1 - len(matches) / len(questions.text_data.split())
+
+        string_mean_pitch = str(mean_pitch)
+        string_speech_rate = str(speech_rate)
+        # string_grammar_score = str(grammar_score)
+
+        sentiment_Intensity_analyzer = SentimentIntensityAnalyzer()
+        sentiment_score = sentiment_Intensity_analyzer.polarity_scores(questions.text_data)
+        sentiment_score= sentiment_score['compound']
+
+        return {"speech_rate": string_speech_rate, "mean_pitch": string_mean_pitch,"sentiment_score":sentiment_score,
+                # "string_grammar_score": string_grammar_score
+                }
 
     except Exception as e:
         print(e)
