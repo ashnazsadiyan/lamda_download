@@ -104,8 +104,9 @@ handler = Mangum(app)
 audio_analyzer = AudioAnalysis()
 
 
-class Questions(BaseModel):
+class Interview(BaseModel):
     text_data: str
+    stream_url:str
 
 
 @app.get("/testing")
@@ -113,53 +114,53 @@ def testing():
     return {"testing": 1}
 
 
-@app.post("/process_data")
-async def process_data(questions: Questions):
-    s3 = boto3.client('s3')
-    try:
-        # Perform audio analysis
-        s3_bucket = "reckognitionnew"
-        s3_key = "save.WAV"
-        local_file_path = '/tmp/output.WAV'
-        # s3.download_file(s3_bucket, s3_key, '/tmp/output.WAV')
+# @app.post("/process_data")
+# async def process_data(questions: Interview):
+#     s3 = boto3.client('s3')
+#     try:
+#         # Perform audio analysis
+#         s3_bucket = "reckognitionnew"
+#         s3_key = "save.WAV"
+#         local_file_path = '/tmp/output.WAV'
+#         # s3.download_file(s3_bucket, s3_key, '/tmp/output.WAV')
+#
+#         with open(local_file_path, 'wb') as local_file:
+#             s3.download_fileobj(s3_bucket, s3_key, local_file)
+#
+#         speech_rate, mean_pitch, tone_score = audio_analyzer.analyze_audio(local_file)
+#         if questions.text_data:
+#             # Your text processing logic here
+#             grammer_score = audio_analyzer.check_grammar(questions.text_data)
+#             grammer_score = round(grammer_score * 100, 2)
+#         else:
+#             processed_text = None
+#         response_data = {
+#             "speech_rate": float(speech_rate),
+#             "mean_pitch": float(mean_pitch),
+#             "tone_score": float(tone_score),
+#             "grammer_score": float(grammer_score)
+#         }
+#         print(response_data)
+#
+#         return JSONResponse(content=response_data, status_code=200)
+#
+#     except Exception as e:
+#         print(e)
+#         # Handle exceptions and return an appropriate error response
+#         return HTTPException(status_code=500, detail=f"Error processing data: {str(e)}")
+#     # finally:
+#     # Delete the temporary audio file
+#     # os.remove(temp_audio_path)
 
-        with open(local_file_path, 'wb') as local_file:
-            s3.download_fileobj(s3_bucket, s3_key, local_file)
 
-        speech_rate, mean_pitch, tone_score = audio_analyzer.analyze_audio(local_file)
-        if questions.text_data:
-            # Your text processing logic here
-            grammer_score = audio_analyzer.check_grammar(questions.text_data)
-            grammer_score = round(grammer_score * 100, 2)
-        else:
-            processed_text = None
-        response_data = {
-            "speech_rate": float(speech_rate),
-            "mean_pitch": float(mean_pitch),
-            "tone_score": float(tone_score),
-            "grammer_score": float(grammer_score)
-        }
-        print(response_data)
-
-        return JSONResponse(content=response_data, status_code=200)
-
-    except Exception as e:
-        print(e)
-        # Handle exceptions and return an appropriate error response
-        return HTTPException(status_code=500, detail=f"Error processing data: {str(e)}")
-    # finally:
-    # Delete the temporary audio file
-    # os.remove(temp_audio_path)
-
-
-@app.post('/download')
-def download_stream(questions: Questions):
+@app.post('/interview_process')
+def download_stream(interview: Interview):
     try:
         command = [
-            # '/usr/share/ffmpeg',
-            'ffmpeg',
+            '/usr/share/ffmpeg',
+            # 'ffmpeg',
             '-i',
-            'https://d8cele0fjkppb.cloudfront.net/ivs/v1/624618927537/y16bDr6BzuhG/2023/12/6/10/49/4JCWi1cxMwWo/media/hls/master.m3u8',
+            interview.stream_url,
             '-b:a', '64k',
             '-f', 'wav',  # Force output format to WAV
             'pipe:1'  # Send output to stdout
@@ -187,7 +188,7 @@ def download_stream(questions: Questions):
         # string_grammar_score = str(grammar_score)
 
         sentiment_Intensity_analyzer = SentimentIntensityAnalyzer()
-        sentiment_score = sentiment_Intensity_analyzer.polarity_scores(questions.text_data)
+        sentiment_score = sentiment_Intensity_analyzer.polarity_scores(interview.text_data)
         sentiment_score= sentiment_score['compound']
 
         return {"speech_rate": string_speech_rate, "mean_pitch": string_mean_pitch,"sentiment_score":sentiment_score,
