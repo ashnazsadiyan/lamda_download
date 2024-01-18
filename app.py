@@ -10,7 +10,7 @@ import boto3
 import nltk
 import subprocess
 from pydantic import BaseModel
-
+import requests
 
 nltk.download('vader_lexicon', download_dir='/tmp/nltk_docs')
 
@@ -98,7 +98,7 @@ audio_analyzer = AudioAnalysis()
 
 class Interview(BaseModel):
     text_data: str
-    stream_url:str
+    stream_url: str
 
 
 @app.get("/testing")
@@ -171,9 +171,9 @@ def download_stream(interview: Interview):
         pitches, magnitudes = librosa.core.piptrack(y=waveform, sr=sample_rate)
         mean_pitch = np.mean(pitches[pitches > 0])
 
-        tool = language_tool_python.LanguageTool('en-US',lt_jar_path=lt_jar_path)
-        matches = tool.check(interview.text_data)
-        grammar_score = 1 - len(matches) / len(interview.text_data.split())
+        # tool = language_tool_python.LanguageTool('en-US', lt_jar_path=lt_jar_path)
+        # matches = tool.check(interview.text_data)
+        grammar_score = check_grammar(interview.text_data)
 
         string_mean_pitch = str(mean_pitch)
         string_speech_rate = str(speech_rate)
@@ -181,9 +181,9 @@ def download_stream(interview: Interview):
 
         sentiment_Intensity_analyzer = SentimentIntensityAnalyzer()
         sentiment_score = sentiment_Intensity_analyzer.polarity_scores(interview.text_data)
-        sentiment_score= sentiment_score['compound']
+        sentiment_score = sentiment_score['compound']
 
-        return {"speech_rate": string_speech_rate, "mean_pitch": string_mean_pitch,"sentiment_score":sentiment_score,
+        return {"speech_rate": string_speech_rate, "mean_pitch": string_mean_pitch, "sentiment_score": sentiment_score,
                 "string_grammar_score": string_grammar_score
                 }
 
@@ -191,6 +191,35 @@ def download_stream(interview: Interview):
         print(e)
         # Handle exceptions and return an appropriate error response
         return HTTPException(status_code=500, detail=f"Error processing data: {str(e)}")
+
+
+def check_grammar(text: str):
+    # LanguageTool API endpoint
+    api_url = "https://languagetool.org/api/v2/check"
+
+    # Specify language (e.g., English)
+    language = "en-US"
+
+    # Prepare data for the POST request
+    data = {
+        "language": language,
+        "text": text
+    }
+
+    # Make the POST request
+    response = requests.post(api_url, data=data)
+
+    # Check if the request was successful (status code 200)
+    if response.status_code == 200:
+        # Parse the JSON response
+        result = response.json()
+
+        # matches = tool.check(interview.text_data)
+        grammar_score = 1 - len(result.get("matches", [])) / len(interview.text_data.split())
+        return grammar_score
+
+    else:
+        print(f"Error: Unable to check grammar. Status code: {response.status_code}")
 
 
 # To run the application:
