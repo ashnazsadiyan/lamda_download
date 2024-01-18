@@ -1,12 +1,10 @@
-from fastapi import FastAPI, File, UploadFile, Form, HTTPException
-from fastapi.responses import JSONResponse
-from typing import Optional
+from fastapi import FastAPI, HTTPException
 import tempfile
 import os
 import librosa
 import numpy as np
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
-import language_tool_python
+import Tool.language_tool_python as language_tool_python
 from mangum import Mangum
 import boto3
 import nltk

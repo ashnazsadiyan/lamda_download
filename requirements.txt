@@ -1,4 +1,3 @@
-language-tool-python
 librosa
 nltk
 fastapi
