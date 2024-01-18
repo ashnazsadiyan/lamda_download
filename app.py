@@ -4,7 +4,7 @@ import os
 import librosa
 import numpy as np
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
-import Tool.language_tool_python as language_tool_python
+import language_tool_python
 from mangum import Mangum
 import boto3
 import nltk
@@ -22,15 +22,8 @@ librosa.cache.path = '/tmp'
 
 os.environ['TMPDIR'] = "/tmp"
 
-current_directory = os.getcwd()
-
-# List all files in the current directory
-files = os.listdir(current_directory)
-
-# Print the list of files
-print("Files in the current directory:")
-for file in files:
-    print(file)
+lt_jar_path = "/usr/share/languagetool-commandline.jar"
+os.environ["LT_JAR_PATH"] = lt_jar_path
 
 
 class AudioAnalysis:
@@ -177,20 +170,20 @@ def download_stream(interview: Interview):
         pitches, magnitudes = librosa.core.piptrack(y=waveform, sr=sample_rate)
         mean_pitch = np.mean(pitches[pitches > 0])
 
-        # tool = language_tool_python.LanguageTool('en-US')
-        # matches = tool.check(questions.text_data)
-        # grammar_score = 1 - len(matches) / len(questions.text_data.split())
+        tool = language_tool_python.LanguageTool('en-US',lt_jar_path=lt_jar_path)
+        matches = tool.check(interview.text_data)
+        grammar_score = 1 - len(matches) / len(interview.text_data.split())
 
         string_mean_pitch = str(mean_pitch)
         string_speech_rate = str(speech_rate)
-        # string_grammar_score = str(grammar_score)
+        string_grammar_score = str(grammar_score)
 
         sentiment_Intensity_analyzer = SentimentIntensityAnalyzer()
         sentiment_score = sentiment_Intensity_analyzer.polarity_scores(interview.text_data)
         sentiment_score= sentiment_score['compound']
 
         return {"speech_rate": string_speech_rate, "mean_pitch": string_mean_pitch,"sentiment_score":sentiment_score,
-                # "string_grammar_score": string_grammar_score
+                "string_grammar_score": string_grammar_score
                 }
 
     except Exception as e:

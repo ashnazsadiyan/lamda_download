@@ -6,3 +6,4 @@ numpy
 mangum
 python-multipart
 boto3
+language-tool-python

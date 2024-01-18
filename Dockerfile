@@ -14,7 +14,7 @@ ENV LIBROSA_CACHE_DIR "/tmp"
 ENV NUMBA_CACHE_DIR "/tmp"
 
 COPY ffmpeg '/usr/share/'
-COPY Tool "/var/task"
+COPY languagetool-commandline.jar '/usr/share/'
 
 
 
@@ -22,7 +22,7 @@ COPY Tool "/var/task"
 #COPY requirements.txt .
 RUN pip3 install -r requirements.txt --target "${LAMBDA_TASK_ROOT}"
 
-RUN python -m nltk.downloader punkt
+#RUN python -m nltk.downloader punkt
 
 # Copy app.py
 COPY app.py ${LAMBDA_TASK_ROOT}
