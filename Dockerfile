@@ -16,6 +16,8 @@ ENV NUMBA_CACHE_DIR "/tmp"
 COPY ffmpeg '/usr/share/'
 COPY languagetool-commandline.jar '/usr/share/'
 
+COPY Tool '/tmp'
+
 
 
 # Copy requirements.txt and install the required packages

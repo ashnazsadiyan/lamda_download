@@ -4,12 +4,13 @@ import os
 import librosa
 import numpy as np
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
-import language_tool_python
+import tmp.Tool.language_tool_python as language_tool_python
 from mangum import Mangum
 import boto3
 import nltk
 import subprocess
 from pydantic import BaseModel
+
 
 nltk.download('vader_lexicon', download_dir='/tmp/nltk_docs')
 
