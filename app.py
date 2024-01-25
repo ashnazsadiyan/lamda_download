@@ -149,8 +149,8 @@ def testing():
 def download_stream(interview: Interview):
     try:
         command = [
-            # '/usr/share/ffmpeg',
-            'ffmpeg',
+            '/usr/share/ffmpeg',
+            # 'ffmpeg',
             '-i',
             interview.stream_url,
             '-b:a', '64k',
@@ -166,30 +166,30 @@ def download_stream(interview: Interview):
         waveform, sample_rate = librosa.load(temp_wav.name, sr=None)
         # Analyze speech rate
         speech_rate = len(waveform) / sample_rate  # Speech rate in seconds
-        words = len(interview.text.split())
-        words_per_minute = (words/speech_rate)*60
 
         # Analyze pitch variation
         pitches, magnitudes = librosa.core.piptrack(y=waveform, sr=sample_rate)
         mean_pitch = np.mean(pitches[pitches > 0])
 
-        if mean_pitch < 150:
-            Mean_pitch_string = "Low Voice Pitch"
-        elif mean_pitch > 300:
-            Mean_pitch_string = "High Voice Pitch"
-        else:
-            Mean_pitch_string = "Neutral Voice Pitch"
+        # tool = language_tool_python.LanguageTool('en-US', lt_jar_path=lt_jar_path)
+        # matches = tool.check(interview.text_data)
         grammar_score = check_grammar(interview.text_data)
 
-        string_mean_pitch = str(Mean_pitch_string)
-        string_words_per_minute = str(words_per_minute)
+        string_mean_pitch = str(mean_pitch)
+        string_speech_rate = str(speech_rate)
         string_grammar_score = str(grammar_score)
 
         sentiment_Intensity_analyzer = SentimentIntensityAnalyzer()
         sentiment_score = sentiment_Intensity_analyzer.polarity_scores(interview.text_data)
         sentiment_score = sentiment_score['compound']
 
-        return {"words_per_minute": string_words_per_minute, "Voice_pitch": string_mean_pitch, "sentiment_score": sentiment_score,
+        # mean_pitch
+        # speech_rate
+        # grammar_score
+
+        return {"speech_rate": string_speech_rate,
+                "mean_pitch": string_mean_pitch,
+                "sentiment_score": sentiment_score,
                 "string_grammar_score": string_grammar_score
                 }
 
@@ -221,7 +221,7 @@ def check_grammar(text: str):
         result = response.json()
 
         # matches = tool.check(interview.text_data)
-        grammar_score = 1 - len(result.get("matches", [])) / len(text.split())
+        grammar_score = 1 - len(result.get("matches", [])) / len(interview.text_data.split())
         return grammar_score
 
     else:
